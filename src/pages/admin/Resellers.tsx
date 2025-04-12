@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Table, 
@@ -44,12 +43,11 @@ import {
   Upload, 
   Download, 
   MoreHorizontal, 
-  User as UserIcon
+  UserIcon
 } from "lucide-react";
 import { useUser, User } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
 
-// Mock resellers data
 const mockResellers: User[] = [
   {
     id: 'r-1',
@@ -83,8 +81,6 @@ const AdminResellers = () => {
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'basic' | 'vip'>('free');
   
   useEffect(() => {
-    // In a real app, this would fetch from an API
-    // Here, we'll use mock data and add any resellers from orders
     const orderResellers = orders.map(order => ({
       id: order.resellerId,
       name: order.resellerName,
@@ -93,7 +89,6 @@ const AdminResellers = () => {
       plan: 'free' as const
     }));
     
-    // Combine mock resellers with resellers from orders, avoiding duplicates
     const allResellers = [...mockResellers];
     orderResellers.forEach(reseller => {
       if (!allResellers.some(r => r.id === reseller.id)) {
@@ -151,7 +146,6 @@ const AdminResellers = () => {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Resellers</h1>
       
-      {/* Resellers Table */}
       <div className="rounded-md border overflow-hidden">
         <Table>
           <TableHeader>
@@ -200,7 +194,6 @@ const AdminResellers = () => {
         </Table>
       </div>
       
-      {/* View Reseller Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent>
           <DialogHeader>
@@ -211,7 +204,7 @@ const AdminResellers = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-center">
                 <div className="p-6 bg-gray-100 rounded-full">
-                  <User className="h-12 w-12 text-gray-500" />
+                  <UserIcon className="h-12 w-12 text-gray-500" />
                 </div>
               </div>
               
@@ -294,7 +287,6 @@ const AdminResellers = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Change Plan Dialog */}
       <Dialog open={planOpen} onOpenChange={setPlanOpen}>
         <DialogContent>
           <DialogHeader>
