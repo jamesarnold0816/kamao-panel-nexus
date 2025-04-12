@@ -105,9 +105,14 @@ const AdminProducts = () => {
       updateProduct(selectedProduct.id, values);
     } else {
       const finalCategory = showCategoryInput && newCategory ? newCategory : values.category;
+      // Fix here: Ensure all required properties are provided
       addProduct({
-        ...values,
+        name: values.name,
+        price: values.price,
+        description: values.description,
         category: finalCategory,
+        accessPlan: values.accessPlan,
+        stock: values.stock,
         image: values.image || getPlaceholderImage(values.name),
       });
     }

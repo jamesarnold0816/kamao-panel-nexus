@@ -44,7 +44,7 @@ import {
   Upload, 
   Download, 
   MoreHorizontal, 
-  User 
+  User as UserIcon
 } from "lucide-react";
 import { useUser, User } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";

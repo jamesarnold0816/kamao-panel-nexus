@@ -46,9 +46,9 @@ const Index = () => {
             </p>
             <Button 
               className="w-full"
-              onClick={() => navigate('/reseller')}
+              onClick={() => navigate('/login?role=reseller')}
             >
-              Continue as Reseller
+              Login as Reseller
             </Button>
           </div>
         </div>
