@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Card, 
@@ -35,7 +34,7 @@ import { toast } from "sonner";
 
 const ResellerProfile = () => {
   const { user, setUser, logout } = useUser();
-  const { orders } = useCart();
+  const { orders, requestPlanUpgrade, planUpgradeRequests } = useCart();
   const [upgradePlanOpen, setUpgradePlanOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'basic' | 'vip'>(
     (user?.plan as 'free' | 'basic' | 'vip') || 'free'
@@ -55,6 +54,11 @@ const ResellerProfile = () => {
   const userOrders = user 
     ? orders.filter(order => order.resellerId === user.id)
     : [];
+    
+  // Check if there's a pending upgrade request
+  const hasPendingRequest = user && planUpgradeRequests.some(
+    req => req.resellerId === user.id && req.status === 'pending'
+  );
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -74,11 +78,16 @@ const ResellerProfile = () => {
     }
   };
   
-  const handleUpgradePlan = () => {
+  const handleRequestUpgrade = () => {
     if (user) {
-      setUser({ ...user, plan: selectedPlan });
+      requestPlanUpgrade(
+        user.id,
+        user.name,
+        user.email,
+        (user.plan as 'free' | 'basic' | 'vip') || 'free',
+        selectedPlan
+      );
       setUpgradePlanOpen(false);
-      toast.success(`Plan upgraded to ${selectedPlan.toUpperCase()}`);
     }
   };
 
@@ -282,15 +291,23 @@ const ResellerProfile = () => {
                       })}
                     </span>
                   </div>
+                  
+                  {hasPendingRequest && (
+                    <div className="mt-4 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-sm text-yellow-800">
+                        You have a pending plan upgrade request. The admin will review it shortly.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="mt-6">
-                  {user?.plan !== 'vip' && (
+                  {user?.plan !== 'vip' && !hasPendingRequest && (
                     <Button 
                       className="w-full" 
                       onClick={() => setUpgradePlanOpen(true)}
                     >
-                      Upgrade Plan
+                      Request Plan Upgrade
                     </Button>
                   )}
                 </div>
@@ -334,7 +351,7 @@ const ResellerProfile = () => {
       <Dialog open={upgradePlanOpen} onOpenChange={setUpgradePlanOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Upgrade Your Plan</DialogTitle>
+            <DialogTitle>Request Plan Upgrade</DialogTitle>
             <DialogDescription>
               Choose a plan that suits your business needs
             </DialogDescription>
@@ -388,7 +405,7 @@ const ResellerProfile = () => {
           </div>
           
           <DialogFooter>
-            <Button onClick={handleUpgradePlan}>Update Plan</Button>
+            <Button onClick={handleRequestUpgrade}>Request Upgrade</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

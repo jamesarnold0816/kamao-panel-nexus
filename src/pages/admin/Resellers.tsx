@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   Table, 
@@ -31,6 +32,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +50,10 @@ import {
   Upload, 
   Download, 
   MoreHorizontal, 
-  UserIcon
+  UserIcon,
+  CheckCircle,
+  XCircle,
+  AlertTriangle
 } from "lucide-react";
 import { useUser, User } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
@@ -73,12 +83,16 @@ const mockResellers: User[] = [
 ];
 
 const AdminResellers = () => {
-  const { orders } = useCart();
+  const { orders, planUpgradeRequests, approvePlanUpgrade, rejectPlanUpgrade } = useCart();
+  const { user, setUser } = useUser();
   const [resellers, setResellers] = useState<User[]>([]);
   const [selectedReseller, setSelectedReseller] = useState<User | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'basic' | 'vip'>('free');
+  const [activeTab, setActiveTab] = useState("resellers");
+  const [requestDetailsOpen, setRequestDetailsOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<typeof planUpgradeRequests[0] | null>(null);
   
   useEffect(() => {
     const orderResellers = orders.map(order => ({
@@ -121,6 +135,29 @@ const AdminResellers = () => {
     }
   };
   
+  const handleViewRequest = (request: typeof planUpgradeRequests[0]) => {
+    setSelectedRequest(request);
+    setRequestDetailsOpen(true);
+  };
+  
+  const handleApproveRequest = (requestId: string, resellerId: string, requestedPlan: 'free' | 'basic' | 'vip') => {
+    approvePlanUpgrade(requestId);
+    
+    // Update the reseller's plan
+    setResellers(prev => 
+      prev.map(r => 
+        r.id === resellerId ? { ...r, plan: requestedPlan } : r
+      )
+    );
+    
+    setRequestDetailsOpen(false);
+  };
+  
+  const handleRejectRequest = (requestId: string) => {
+    rejectPlanUpgrade(requestId);
+    setRequestDetailsOpen(false);
+  };
+  
   const getPlanBadge = (plan: 'free' | 'basic' | 'vip' | null) => {
     switch (plan) {
       case 'free':
@@ -141,59 +178,138 @@ const AdminResellers = () => {
   const calculateTotalSpent = (resellerId: string) => {
     return getResellerOrders(resellerId).reduce((sum, order) => sum + order.total, 0);
   };
+  
+  const getStatusBadge = (status: 'pending' | 'approved' | 'rejected') => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-800">Pending</Badge>;
+      case 'approved':
+        return <Badge variant="outline" className="bg-green-50 text-green-800">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-50 text-red-800">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+  
+  const pendingRequests = planUpgradeRequests.filter(req => req.status === 'pending');
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Resellers</h1>
       
-      <div className="rounded-md border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Plan</TableHead>
-              <TableHead>Orders</TableHead>
-              <TableHead>Total Spent</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {resellers.map((reseller) => (
-              <TableRow key={reseller.id}>
-                <TableCell className="font-medium">{reseller.name}</TableCell>
-                <TableCell>{reseller.email}</TableCell>
-                <TableCell>{getPlanBadge(reseller.plan)}</TableCell>
-                <TableCell>{getResellerOrders(reseller.id).length}</TableCell>
-                <TableCell>₹{calculateTotalSpent(reseller.id).toLocaleString()}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleViewReseller(reseller)}>
-                        <Eye className="mr-2 h-4 w-4" /> View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleChangePlan(reseller)}>
-                        <Upload className="mr-2 h-4 w-4" /> Change Plan
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Download className="mr-2 h-4 w-4" /> Download Plan
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList>
+          <TabsTrigger value="resellers">
+            All Resellers
+          </TabsTrigger>
+          <TabsTrigger value="plan-requests" className="relative">
+            Plan Upgrade Requests
+            {pendingRequests.length > 0 && (
+              <span className="absolute top-0 right-0 -mt-1 -mr-1 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-medium text-white">
+                {pendingRequests.length}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="resellers" className="mt-6">
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Orders</TableHead>
+                  <TableHead>Total Spent</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {resellers.map((reseller) => (
+                  <TableRow key={reseller.id}>
+                    <TableCell className="font-medium">{reseller.name}</TableCell>
+                    <TableCell>{reseller.email}</TableCell>
+                    <TableCell>{getPlanBadge(reseller.plan)}</TableCell>
+                    <TableCell>{getResellerOrders(reseller.id).length}</TableCell>
+                    <TableCell>₹{calculateTotalSpent(reseller.id).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleViewReseller(reseller)}>
+                            <Eye className="mr-2 h-4 w-4" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleChangePlan(reseller)}>
+                            <Upload className="mr-2 h-4 w-4" /> Change Plan
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>
+                            <Download className="mr-2 h-4 w-4" /> Download Plan
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="plan-requests" className="mt-6">
+          {planUpgradeRequests.length > 0 ? (
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Reseller</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Current Plan</TableHead>
+                    <TableHead>Requested Plan</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {planUpgradeRequests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell className="font-medium">{request.resellerName}</TableCell>
+                      <TableCell>{request.resellerEmail}</TableCell>
+                      <TableCell>{getPlanBadge(request.currentPlan)}</TableCell>
+                      <TableCell>{getPlanBadge(request.requestedPlan)}</TableCell>
+                      <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{getStatusBadge(request.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleViewRequest(request)}
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground">No plan upgrade requests yet</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
       
+      {/* View Reseller Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent>
           <DialogHeader>
@@ -287,6 +403,7 @@ const AdminResellers = () => {
         </DialogContent>
       </Dialog>
       
+      {/* Change Plan Dialog */}
       <Dialog open={planOpen} onOpenChange={setPlanOpen}>
         <DialogContent>
           <DialogHeader>
@@ -346,6 +463,115 @@ const AdminResellers = () => {
           <DialogFooter>
             <Button onClick={handleUpdatePlan}>Update Plan</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Plan Request Details Dialog */}
+      <Dialog open={requestDetailsOpen} onOpenChange={setRequestDetailsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Plan Upgrade Request</DialogTitle>
+          </DialogHeader>
+          
+          {selectedRequest && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-center">
+                <div className="p-6 bg-gray-100 rounded-full">
+                  <UserIcon className="h-12 w-12 text-gray-500" />
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <h3 className="text-xl font-semibold">{selectedRequest.resellerName}</h3>
+                <p className="text-gray-500">{selectedRequest.resellerEmail}</p>
+                <div className="mt-2">
+                  {getStatusBadge(selectedRequest.status)}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Request Date</span>
+                  <span>{new Date(selectedRequest.createdAt).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Current Plan</span>
+                  <span className="font-medium">{selectedRequest.currentPlan.toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Requested Plan</span>
+                  <span className="font-medium">{selectedRequest.requestedPlan.toUpperCase()}</span>
+                </div>
+              </div>
+              
+              <div className="p-3 border rounded-md bg-gray-50">
+                <h4 className="text-sm font-medium mb-2">Plan Differences</h4>
+                <div className="text-sm">
+                  {selectedRequest.currentPlan === 'free' && selectedRequest.requestedPlan === 'basic' && (
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Access to premium products</li>
+                      <li>Ability to place orders</li>
+                      <li>Priority support</li>
+                    </ul>
+                  )}
+                  {selectedRequest.currentPlan === 'free' && selectedRequest.requestedPlan === 'vip' && (
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Access to ALL products</li>
+                      <li>Ability to place orders</li>
+                      <li>Exclusive high-profit products</li>
+                      <li>Priority fulfillment</li>
+                      <li>24/7 dedicated support</li>
+                    </ul>
+                  )}
+                  {selectedRequest.currentPlan === 'basic' && selectedRequest.requestedPlan === 'vip' && (
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Access to exclusive high-profit products</li>
+                      <li>Priority fulfillment</li>
+                      <li>Upgrade from priority support to 24/7 dedicated support</li>
+                    </ul>
+                  )}
+                </div>
+              </div>
+              
+              {selectedRequest.status === 'pending' && (
+                <div className="flex space-x-3">
+                  <Button 
+                    className="flex-1" 
+                    onClick={() => handleApproveRequest(
+                      selectedRequest.id, 
+                      selectedRequest.resellerId, 
+                      selectedRequest.requestedPlan
+                    )}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Approve Request
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => handleRejectRequest(selectedRequest.id)}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Reject Request
+                  </Button>
+                </div>
+              )}
+              
+              {selectedRequest.status === 'approved' && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-800 flex items-center">
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  <p>This request was approved</p>
+                </div>
+              )}
+              
+              {selectedRequest.status === 'rejected' && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-800 flex items-center">
+                  <XCircle className="h-5 w-5 mr-2" />
+                  <p>This request was rejected</p>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

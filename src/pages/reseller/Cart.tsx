@@ -30,12 +30,24 @@ import { Separator } from "@/components/ui/separator";
 import { ShoppingCart, Trash2, Plus, Minus, Check } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useUser } from "@/contexts/UserContext";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const ResellerCart = () => {
   const { cartItems, updateQuantity, removeFromCart, clearCart, checkout, cartTotal } = useCart();
   const { user } = useUser();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [orderMessage, setOrderMessage] = useState("");
+  const [revenue, setRevenue] = useState<number>(0);
+  const [shippingInfo, setShippingInfo] = useState({
+    name: "",
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    phone: "",
+    carrier: "standard"
+  });
   
   const handleQuantityChange = (productId: string, type: 'increase' | 'decrease') => {
     const item = cartItems.find(item => item.productId === productId);
@@ -49,10 +61,45 @@ const ResellerCart = () => {
     removeFromCart(productId);
   };
   
+  const handleShippingInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setShippingInfo(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleCarrierChange = (value: string) => {
+    setShippingInfo(prev => ({ ...prev, carrier: value }));
+  };
+  
+  const handleRevenueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    setRevenue(value);
+  };
+  
   const handleCheckout = () => {
-    checkout();
+    checkout(shippingInfo, revenue);
     setOrderMessage("");
+    setRevenue(0);
+    setShippingInfo({
+      name: "",
+      address: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      phone: "",
+      carrier: "standard"
+    });
     setCheckoutOpen(false);
+  };
+  
+  const isShippingInfoValid = () => {
+    return (
+      shippingInfo.name.trim() !== "" &&
+      shippingInfo.address.trim() !== "" &&
+      shippingInfo.city.trim() !== "" &&
+      shippingInfo.state.trim() !== "" &&
+      shippingInfo.zipCode.trim() !== "" &&
+      shippingInfo.phone.trim() !== ""
+    );
   };
 
   return (
@@ -220,17 +267,123 @@ const ResellerCart = () => {
       
       {/* Checkout Dialog */}
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Confirm Order</DialogTitle>
+            <DialogTitle>Complete Your Order</DialogTitle>
             <DialogDescription>
-              Review your order before confirming
+              Provide shipping information and review your order
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div>
-              <h4 className="text-sm font-medium mb-2">Order Items</h4>
+          <div className="grid md:grid-cols-2 gap-6 py-4">
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Shipping Information</h4>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    placeholder="Enter recipient's name"
+                    value={shippingInfo.name}
+                    onChange={handleShippingInfoChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    placeholder="Enter shipping address"
+                    value={shippingInfo.address}
+                    onChange={handleShippingInfoChange}
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      placeholder="City"
+                      value={shippingInfo.city}
+                      onChange={handleShippingInfoChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State</Label>
+                    <Input
+                      id="state"
+                      name="state"
+                      placeholder="State"
+                      value={shippingInfo.state}
+                      onChange={handleShippingInfoChange}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="zipCode">ZIP Code</Label>
+                    <Input
+                      id="zipCode"
+                      name="zipCode"
+                      placeholder="ZIP Code"
+                      value={shippingInfo.zipCode}
+                      onChange={handleShippingInfoChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      placeholder="Contact phone"
+                      value={shippingInfo.phone}
+                      onChange={handleShippingInfoChange}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="carrier">Shipping Method</Label>
+                  <Select
+                    value={shippingInfo.carrier}
+                    onValueChange={handleCarrierChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select shipping method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">Standard Delivery (3-5 days)</SelectItem>
+                      <SelectItem value="express">Express Delivery (1-2 days)</SelectItem>
+                      <SelectItem value="priority">Priority Shipping (24 hours)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="revenue">Expected Revenue (₹)</Label>
+                  <Input
+                    id="revenue"
+                    type="number"
+                    placeholder="Enter your expected revenue"
+                    value={revenue || ''}
+                    onChange={handleRevenueChange}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the amount you expect to earn from selling these products
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Order Details</h4>
               <div className="border rounded-md overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -261,18 +414,16 @@ const ResellerCart = () => {
                   </TableBody>
                 </Table>
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="message" className="text-sm font-medium">
-                Order Message (Optional)
-              </label>
-              <Textarea
-                id="message"
-                placeholder="Add any special instructions or notes for this order"
-                value={orderMessage}
-                onChange={(e) => setOrderMessage(e.target.value)}
-              />
+              
+              <div className="space-y-2">
+                <Label htmlFor="message">Order Message (Optional)</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Add any special instructions or notes for this order"
+                  value={orderMessage}
+                  onChange={(e) => setOrderMessage(e.target.value)}
+                />
+              </div>
             </div>
           </div>
           
@@ -280,9 +431,12 @@ const ResellerCart = () => {
             <Button variant="outline" onClick={() => setCheckoutOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCheckout}>
+            <Button 
+              onClick={handleCheckout}
+              disabled={!isShippingInfoValid()}
+            >
               <Check className="mr-2 h-4 w-4" />
-              Confirm Order
+              Complete Order
             </Button>
           </DialogFooter>
         </DialogContent>

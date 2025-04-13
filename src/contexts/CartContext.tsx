@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Product } from './ProductContext';
 import { useUser } from './UserContext';
@@ -8,6 +7,17 @@ export interface CartItem {
   productId: string;
   quantity: number;
   product: Product;
+}
+
+export interface PlanUpgradeRequest {
+  id: string;
+  resellerId: string;
+  resellerName: string;
+  resellerEmail: string;
+  currentPlan: 'free' | 'basic' | 'vip';
+  requestedPlan: 'free' | 'basic' | 'vip';
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: Date;
 }
 
 export interface Order {
@@ -21,6 +31,16 @@ export interface Order {
   createdAt: Date;
   message?: string;
   reply?: string;
+  shipping?: {
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    phone: string;
+    carrier: string;
+  };
+  revenue?: number;
 }
 
 interface CartContextType {
@@ -31,10 +51,14 @@ interface CartContextType {
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
-  checkout: () => void;
+  checkout: (shippingInfo: Order['shipping'], revenue: number) => void;
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'createdAt'>) => void;
   updateOrder: (id: string, updates: Partial<Omit<Order, 'id' | 'createdAt'>>) => void;
+  planUpgradeRequests: PlanUpgradeRequest[];
+  requestPlanUpgrade: (resellerId: string, resellerName: string, resellerEmail: string, currentPlan: 'free' | 'basic' | 'vip', requestedPlan: 'free' | 'basic' | 'vip') => void;
+  approvePlanUpgrade: (requestId: string) => void;
+  rejectPlanUpgrade: (requestId: string) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -73,6 +97,7 @@ const mockOrders: Order[] = [
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [planUpgradeRequests, setPlanUpgradeRequests] = useState<PlanUpgradeRequest[]>([]);
   const { user } = useUser();
   
   // Load cart from localStorage on initial mount
@@ -104,6 +129,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setOrders(mockOrders);
       }
+      
+      // Load plan upgrade requests
+      const savedRequests = localStorage.getItem('kamao-plan-requests');
+      if (savedRequests) {
+        try {
+          const parsed = JSON.parse(savedRequests);
+          // Convert string dates back to Date objects
+          const requestsWithDates = parsed.map((r: any) => ({
+            ...r,
+            createdAt: new Date(r.createdAt)
+          }));
+          setPlanUpgradeRequests(requestsWithDates);
+        } catch (e) {
+          setPlanUpgradeRequests([]);
+        }
+      }
     }
   }, [user?.id]);
 
@@ -120,6 +161,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('kamao-orders', JSON.stringify(orders));
     }
   }, [orders]);
+  
+  // Save plan upgrade requests to localStorage when they change
+  useEffect(() => {
+    if (planUpgradeRequests.length) {
+      localStorage.setItem('kamao-plan-requests', JSON.stringify(planUpgradeRequests));
+    }
+  }, [planUpgradeRequests]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prevItems => {
@@ -173,7 +221,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     0
   );
 
-  const checkout = () => {
+  const checkout = (shippingInfo: Order['shipping'], revenue: number) => {
     if (!user) {
       toast.error("Please login to checkout");
       return;
@@ -192,7 +240,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       resellerEmail: user.email,
       status: 'pending',
       total: cartTotal,
-      createdAt: new Date()
+      createdAt: new Date(),
+      shipping: shippingInfo,
+      revenue: revenue
     };
     
     setOrders(prev => [newOrder, ...prev]);
@@ -218,6 +268,46 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     toast.success("Order updated successfully");
   };
 
+  const requestPlanUpgrade = (
+    resellerId: string, 
+    resellerName: string, 
+    resellerEmail: string, 
+    currentPlan: 'free' | 'basic' | 'vip', 
+    requestedPlan: 'free' | 'basic' | 'vip'
+  ) => {
+    const newRequest: PlanUpgradeRequest = {
+      id: `req-${Date.now()}`,
+      resellerId,
+      resellerName,
+      resellerEmail,
+      currentPlan,
+      requestedPlan,
+      status: 'pending',
+      createdAt: new Date()
+    };
+    
+    setPlanUpgradeRequests(prev => [newRequest, ...prev]);
+    toast.success("Plan upgrade request submitted successfully");
+  };
+  
+  const approvePlanUpgrade = (requestId: string) => {
+    setPlanUpgradeRequests(prev => 
+      prev.map(req => 
+        req.id === requestId ? { ...req, status: 'approved' } : req
+      )
+    );
+    toast.success("Plan upgrade request approved");
+  };
+  
+  const rejectPlanUpgrade = (requestId: string) => {
+    setPlanUpgradeRequests(prev => 
+      prev.map(req => 
+        req.id === requestId ? { ...req, status: 'rejected' } : req
+      )
+    );
+    toast.info("Plan upgrade request rejected");
+  };
+
   return (
     <CartContext.Provider value={{ 
       cartItems, 
@@ -230,7 +320,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       checkout,
       orders,
       addOrder,
-      updateOrder
+      updateOrder,
+      planUpgradeRequests,
+      requestPlanUpgrade,
+      approvePlanUpgrade,
+      rejectPlanUpgrade
     }}>
       {children}
     </CartContext.Provider>

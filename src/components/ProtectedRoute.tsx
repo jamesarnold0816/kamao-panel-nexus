@@ -15,13 +15,15 @@ const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
+  // If a specific role is required and the user doesn't have it
   if (role && user?.role !== role) {
-    // Redirect to appropriate dashboard based on role
+    // Redirect to appropriate dashboard based on user's actual role
     if (user?.role === 'admin') {
       return <Navigate to="/admin" replace />;
     } else if (user?.role === 'reseller') {
-      return <Navigate to="/reseller" replace />;
+      return <Navigate to="/reseller/dashboard" replace />;
     } else {
+      // Fallback to home page if role is unknown
       return <Navigate to="/" replace />;
     }
   }
