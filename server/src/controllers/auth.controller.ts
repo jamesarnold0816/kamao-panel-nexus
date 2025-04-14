@@ -62,14 +62,14 @@ export const login = async (req: Request, res: Response) => {
 export const signup = async (req: Request, res: Response) => {
   try {
     const { name, email, password, role }: SignupRequest = req.body;
-
+    console.log(req.body);
     // Validate request
     if (!name || !email || !password || !role) {
       return res.status(400).json({ message: 'All fields are required' });
     }
-    if (role === "admin") {
-      return res.status(400).json({ message: 'Admin role is not allowed to sign up' });
-    }
+    // if (role === "admin") {
+    //   return res.status(400).json({ message: 'Admin role is not allowed to sign up' });
+    // }
     // Check if user already exists
     const { data: existingUser } = await supabase
       .from('users')

@@ -46,7 +46,12 @@ const AdminSettings = () => {
         }
       } catch (error) {
         console.error('Error fetching company settings:', error);
-        toast.error('Failed to load company settings');
+        // Use fallback values if API connection fails
+        setCompanyName('Kamao');
+        setLogoUrl('/placeholder.svg');
+        
+        // Show a more user-friendly error message
+        toast.error('Could not load settings from server. Using default values.');
       } finally {
         setIsLoading(false);
       }
@@ -72,7 +77,20 @@ const AdminSettings = () => {
       toast.success("Logo uploaded successfully");
     } catch (error) {
       console.error("Logo upload error:", error);
-      toast.error("Failed to upload logo");
+      
+      // Check if it's a network error
+      if (error.message && error.message.includes('Network Error')) {
+        toast.error("Network error: Cannot connect to upload server. Please check your connection.");
+        
+        // Create a temporary object URL for the logo if we're in development
+        if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
+          const tempUrl = URL.createObjectURL(file);
+          setLogoUrl(tempUrl);
+          toast.info("Using temporary local URL for preview purposes");
+        }
+      } else {
+        toast.error("Failed to upload logo");
+      }
     } finally {
       setIsLogoUploading(false);
     }
@@ -92,7 +110,13 @@ const AdminSettings = () => {
       toast.success("Company information saved successfully");
     } catch (error) {
       console.error("Error saving company info:", error);
-      toast.error("Failed to save company information");
+      
+      // Check if it's a network error
+      if (error.message && error.message.includes('Network Error')) {
+        toast.error("Network error: Cannot connect to server. Please check your connection.");
+      } else {
+        toast.error("Failed to save company information");
+      }
     } finally {
       setIsSaving(false);
     }

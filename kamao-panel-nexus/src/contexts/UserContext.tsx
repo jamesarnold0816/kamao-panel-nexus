@@ -51,9 +51,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       
       const response = await authService.login(email, password, role as string);
       
-      // Save token and user data
+      if (!response || !response.token || !response.user) {
+        toast.error("Invalid response from server");
+        return false;
+      }
+      
+      // Save token in localStorage and then update user state
       localStorage.setItem('kamao-token', response.token);
+      localStorage.setItem('kamao-user', JSON.stringify(response.user));
+      
+      // Update state with user data
       setUser(response.user);
+      setIsAuthenticated(true);
+      
+      console.log("Login successful with token:", response.token.substring(0, 10) + "...");
       toast.success("Login successful");
       return true;
     } catch (error: any) {
@@ -72,9 +83,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       
       const response = await authService.signup(name, email, password, role as string);
       
-      // Save token and user data
+      if (!response || !response.token || !response.user) {
+        toast.error("Invalid response from server");
+        return false;
+      }
+      
+      // Save token in localStorage and then update user state
       localStorage.setItem('kamao-token', response.token);
+      localStorage.setItem('kamao-user', JSON.stringify(response.user));
+      
+      // Update state with user data
       setUser(response.user);
+      setIsAuthenticated(true);
+      
+      console.log("Signup successful with token:", response.token.substring(0, 10) + "...");
       toast.success(`Account created successfully`);
       return true;
     } catch (error: any) {
