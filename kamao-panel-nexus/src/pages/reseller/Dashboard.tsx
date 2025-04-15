@@ -254,7 +254,7 @@ const ResellerDashboard = () => {
                     {product.description}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold">₹{product.price.toLocaleString()}</span>
+                    <span className="font-bold">Rs{product.price.toLocaleString()}</span>
                     <Badge 
                       className={
                         product.access_plan === 'free'

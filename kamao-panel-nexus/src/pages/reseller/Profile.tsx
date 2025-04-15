@@ -440,8 +440,8 @@ const ResellerProfile = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Free Plan</SelectItem>
-                  <SelectItem value="basic">Basic Plan (₹1,000/month)</SelectItem>
-                  <SelectItem value="vip">VIP Plan (₹3,000/month)</SelectItem>
+                  <SelectItem value="basic">Basic Plan (Rs1,000/month)</SelectItem>
+                  <SelectItem value="vip">VIP Plan (Rs3,000/month)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

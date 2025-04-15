@@ -229,7 +229,7 @@ const AdminResellers = () => {
                         <TableCell>{reseller.email}</TableCell>
                         <TableCell>{getPlanBadge(reseller.plan)}</TableCell>
                         <TableCell>{getResellerOrders(reseller.id).length}</TableCell>
-                        <TableCell>₹{calculateTotalSpent(reseller.id).toLocaleString()}</TableCell>
+                        <TableCell>Rs{calculateTotalSpent(reseller.id).toLocaleString()}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -343,7 +343,7 @@ const AdminResellers = () => {
                 <div className="p-4 bg-gray-50 rounded-md">
                   <p className="text-gray-500 text-sm">Total Spent</p>
                   <p className="font-medium mt-1">
-                    ₹{calculateTotalSpent(selectedReseller.id).toLocaleString()}
+                    Rs{calculateTotalSpent(selectedReseller.id).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -372,7 +372,7 @@ const AdminResellers = () => {
                               <TableCell>
                                 {new Date(order.created_at).toLocaleDateString()}
                               </TableCell>
-                              <TableCell>₹{order.total.toLocaleString()}</TableCell>
+                              <TableCell>Rs{order.total.toLocaleString()}</TableCell>
                               <TableCell>
                                 <Badge 
                                   variant="outline" 
@@ -423,8 +423,8 @@ const AdminResellers = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Free Plan</SelectItem>
-                  <SelectItem value="basic">Basic Plan (₹1,000/month)</SelectItem>
-                  <SelectItem value="vip">VIP Plan (₹3,000/month)</SelectItem>
+                  <SelectItem value="basic">Basic Plan (Rs1,000/month)</SelectItem>
+                  <SelectItem value="vip">VIP Plan (Rs3,000/month)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

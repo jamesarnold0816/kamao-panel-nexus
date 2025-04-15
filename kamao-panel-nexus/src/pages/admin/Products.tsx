@@ -33,6 +33,7 @@ import { useProducts, Product, AccessPlan } from "@/contexts/ProductContext";
 import ProductTable from "@/components/ProductTable";
 import { getPlaceholderImage } from "@/lib/utils";
 import FileUpload from "@/components/ui/file-upload";
+import MultiFileUpload from "@/components/ui/multi-file-upload";
 import { toast } from "sonner";
 import uploadService from "@/services/upload";
 
@@ -44,6 +45,7 @@ const formSchema = z.object({
   access_plan: z.enum(['free', 'basic', 'vip', 'all'] as const),
   stock: z.coerce.number().min(0, { message: "Stock cannot be negative." }),
   image: z.string().optional(),
+  secondary_images: z.array(z.string()).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -56,6 +58,7 @@ const AdminProducts = () => {
   const [newCategory, setNewCategory] = useState('');
   const [showCategoryInput, setShowCategoryInput] = useState(false);
   const [productImage, setProductImage] = useState<File | null>(null);
+  const [secondaryImages, setSecondaryImages] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   
   const form = useForm<FormValues>({
@@ -68,6 +71,7 @@ const AdminProducts = () => {
       access_plan: 'free',
       stock: 0,
       image: '',
+      secondary_images: [],
     },
   });
   
@@ -80,6 +84,7 @@ const AdminProducts = () => {
       setSelectedProduct(null);
       setIsEditing(false);
       setProductImage(null);
+      setSecondaryImages([]);
     }
     setOpen(open);
   };
@@ -95,6 +100,7 @@ const AdminProducts = () => {
       access_plan: product.access_plan,
       stock: product.stock,
       image: product.image,
+      secondary_images: product.secondary_images || [],
     });
     setOpen(true);
   };
@@ -109,19 +115,38 @@ const AdminProducts = () => {
     try {
       setIsUploading(true);
       let imageUrl = values.image || '';
+      let secondaryImageUrls: string[] = [];
       
-      // Upload image if a new one is selected
+      // Upload main image if a new one is selected
       if (productImage) {
         try {
-          // Using our mock upload service which will always succeed
           const uploadResponse = await uploadService.uploadFile(productImage, 'product');
           imageUrl = uploadResponse.url;
         } catch (error) {
-          console.error("Image upload error:", error);
-          toast.error("Failed to upload image");
+          console.error("Main image upload error:", error);
+          toast.error("Failed to upload main image");
           setIsUploading(false);
           return;
         }
+      }
+      
+      // Upload secondary images if any are selected
+      if (secondaryImages.length > 0) {
+        try {
+          const uploadPromises = secondaryImages.map(file => 
+            uploadService.uploadFile(file, 'product')
+          );
+          
+          const uploadResults = await Promise.all(uploadPromises);
+          secondaryImageUrls = uploadResults.map(result => result.url);
+        } catch (error) {
+          console.error("Secondary images upload error:", error);
+          toast.error("Failed to upload some secondary images");
+          // Continue with the ones that did upload
+        }
+      } else if (selectedProduct?.secondary_images) {
+        // Keep existing secondary images if not changed
+        secondaryImageUrls = selectedProduct.secondary_images;
       }
       
       const finalCategory = showCategoryInput && newCategory ? newCategory : values.category;
@@ -131,6 +156,7 @@ const AdminProducts = () => {
           ...values,
           category: finalCategory,
           image: imageUrl,
+          secondary_images: secondaryImageUrls,
         });
       } else {
         addProduct({
@@ -141,6 +167,7 @@ const AdminProducts = () => {
           access_plan: values.access_plan,
           stock: values.stock,
           image: imageUrl || getPlaceholderImage(values.name),
+          secondary_images: secondaryImageUrls,
         });
       }
       
@@ -213,7 +240,7 @@ const AdminProducts = () => {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price (₹)</FormLabel>
+                      <FormLabel>Price (Rs)</FormLabel>
                       <FormControl>
                         <Input type="number" min="0" step="1" placeholder="10000" {...field} />
                       </FormControl>
@@ -346,6 +373,34 @@ const AdminProducts = () => {
                         maxSizeMB={5}
                         previewHeight="h-40"
                         previewWidth="w-40"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="secondary_images"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Secondary Images</FormLabel>
+                    <FormControl>
+                      <MultiFileUpload
+                        onFilesChange={(files) => {
+                          if (files.length > 0) {
+                            setSecondaryImages(files);
+                            field.onChange(files.map(file => file.name));
+                          }
+                        }}
+                        currentImages={selectedProduct?.secondary_images || []}
+                        accept="image/*"
+                        buttonText="Upload Secondary Images"
+                        maxSizeMB={5}
+                        previewHeight="h-24"
+                        previewWidth="w-24"
+                        maxFiles={4}
                       />
                     </FormControl>
                     <FormMessage />

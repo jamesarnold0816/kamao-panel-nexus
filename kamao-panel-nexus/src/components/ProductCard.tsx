@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Product } from "@/contexts/ProductContext";
 import { useCart } from "@/contexts/CartContext";
 import { useUser } from "@/contexts/UserContext";
 import uploadService from "@/services/upload";
+import { formatCurrency } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +18,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart, cartItems } = useCart();
   const { user } = useUser();
   const [quantity, setQuantity] = useState(1);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const navigate = useNavigate();
   
   const isInCart = cartItems.some(item => item.product_id === product.id);
   
@@ -43,25 +47,63 @@ const ProductCard = ({ product }: ProductCardProps) => {
     addToCart(product, quantity);
   };
 
+  const toggleDescription = () => {
+    setShowFullDescription(!showFullDescription);
+  };
+  
+  const viewProductDetails = () => {
+    navigate(`/products/${product.id}`);
+  };
+
   return (
     <Card className="overflow-hidden h-full flex flex-col">
       <div className="relative h-48 overflow-hidden">
         <img
           src={product.image ? uploadService.getImageUrl(product.image) : '/placeholder.svg'}
           alt={product.name}
-          className="w-full h-full object-cover transition-transform hover:scale-105"
+          className="w-full h-full object-cover transition-transform hover:scale-105 cursor-pointer"
+          onClick={viewProductDetails}
         />
         <Badge className={`absolute top-2 right-2 ${planColors[product.access_plan]}`}>
           {product.access_plan.charAt(0).toUpperCase() + product.access_plan.slice(1)}
         </Badge>
+        <Button 
+          variant="secondary" 
+          size="sm" 
+          className="absolute bottom-2 right-2 opacity-90 hover:opacity-100"
+          onClick={viewProductDetails}
+        >
+          <ExternalLink className="h-4 w-4 mr-1" /> Details
+        </Button>
       </div>
       
       <CardContent className="pt-4 flex-grow">
-        <h3 className="font-semibold text-lg mb-1 line-clamp-1">{product.name}</h3>
-        <p className="text-gray-500 text-sm mb-2 line-clamp-2">{product.description}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-lg font-bold">₹{product.price.toLocaleString()}</span>
-          <span className="text-sm text-gray-500">{product.stock} left</span>
+        <div className="flex justify-between items-start mb-1">
+          <h3 className="font-semibold text-lg line-clamp-1">{product.name}</h3>
+          <span className="text-lg font-bold whitespace-nowrap ml-2">{formatCurrency(product.price)}</span>
+        </div>
+        
+        <div className="mb-2">
+          <p className="text-gray-500 text-sm mb-1">Stock: {product.stock} available</p>
+          <div className="bg-gray-50 p-2 rounded-md">
+            <p className={`text-gray-800 text-sm ${showFullDescription ? '' : 'line-clamp-3'}`}>
+              {product.description}
+            </p>
+            {product.description && product.description.length > 120 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-0 h-6 text-xs text-kamao-purple flex items-center mt-1"
+                onClick={toggleDescription}
+              >
+                {showFullDescription ? (
+                  <>Less <ChevronUp className="ml-1 h-3 w-3" /></>
+                ) : (
+                  <>More <ChevronDown className="ml-1 h-3 w-3" /></>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
       

@@ -7,7 +7,7 @@ export interface UploadResponse {
 }
 
 // Get the API base URL for constructing image URLs
-const API_BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://46.202.166.36/:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
 export const uploadService = {
   /**

@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Order, useCart } from "@/contexts/CartContext";
 import OrderTable from "@/components/OrderTable";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCurrency } from "@/lib/utils";
 
 const AdminOrders = () => {
   const { orders, updateOrderStatus, addOrderReply } = useCart();
@@ -141,14 +141,14 @@ const AdminOrders = () => {
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              ₹{item.product.price.toLocaleString()}
+                              {formatCurrency(item.product.price)}
                             </div>
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                             {item.quantity}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ₹{(item.product.price * item.quantity).toLocaleString()}
+                            {formatCurrency(item.product.price * item.quantity)}
                           </td>
                         </tr>
                       ))}
@@ -159,7 +159,7 @@ const AdminOrders = () => {
                           Total:
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900">
-                          ₹{selectedOrder.total.toLocaleString()}
+                          {formatCurrency(selectedOrder.total)}
                         </td>
                       </tr>
                     </tfoot>

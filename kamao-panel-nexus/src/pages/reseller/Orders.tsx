@@ -191,14 +191,14 @@ const ResellerOrders = () => {
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900">
-                                ₹{item.product.price.toLocaleString()}
+                                Rs{item.product.price.toLocaleString()}
                               </div>
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                               {item.quantity}
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                              ₹{(item.product.price * item.quantity).toLocaleString()}
+                              Rs{(item.product.price * item.quantity).toLocaleString()}
                             </td>
                           </tr>
                         ))}
@@ -209,7 +209,7 @@ const ResellerOrders = () => {
                             Total:
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900">
-                            ₹{selectedOrder.total.toLocaleString()}
+                            Rs{selectedOrder.total.toLocaleString()}
                           </td>
                         </tr>
                       </tfoot>

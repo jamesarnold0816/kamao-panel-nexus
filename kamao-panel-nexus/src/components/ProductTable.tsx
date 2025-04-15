@@ -21,7 +21,7 @@ import {
   Trash2 
 } from "lucide-react";
 import { Product } from "@/contexts/ProductContext";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import uploadService from "@/services/upload";
 
 interface ProductTableProps {
@@ -64,7 +64,7 @@ const ProductTable = ({ products, onEdit, onDelete }: ProductTableProps) => {
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.category}</TableCell>
-                <TableCell>₹{product.price.toLocaleString()}</TableCell>
+                <TableCell>{formatCurrency(product.price)}</TableCell>
                 <TableCell>{product.stock}</TableCell>
                 <TableCell>
                   <Badge 

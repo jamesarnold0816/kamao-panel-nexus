@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Table, 
@@ -24,6 +23,7 @@ import {
   Clock 
 } from "lucide-react";
 import { Order } from "@/contexts/CartContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface OrderTableProps {
   orders: Order[];
@@ -102,7 +102,7 @@ const OrderTable = ({ orders, onView, onUpdateStatus, isAdmin = false }: OrderTa
                   }
                 </TableCell>
                 <TableCell>{order.items.reduce((sum, item) => sum + item.quantity, 0)} items</TableCell>
-                <TableCell>₹{order.total.toLocaleString()}</TableCell>
+                <TableCell>{formatCurrency(order.total)}</TableCell>
                 <TableCell>
                   <div className="flex items-center">
                     {getStatusIcon(order.status)}

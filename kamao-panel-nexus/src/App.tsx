@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,7 @@ import ResellerIntroduction from "./pages/reseller/Introduction";
 import ResellerOrders from "./pages/reseller/Orders";
 import ResellerProfile from "./pages/reseller/Profile";
 import ResellerCart from "./pages/reseller/Cart";
+import ProductDetail from "./pages/ProductDetail";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import AdminLayout from "./layouts/AdminLayout";
@@ -72,6 +72,8 @@ const App = () => (
                   } />
                   <Route path="cart" element={<ResellerCart />} />
                 </Route>
+                
+                <Route path="/products/:id" element={<ProductDetail />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>

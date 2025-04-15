@@ -13,6 +13,7 @@ export interface Product {
   category: string;
   access_plan: AccessPlan; // Changed to match server naming
   image: string;
+  secondary_images?: string[]; // Array of secondary image URLs
   stock: number;
   created_at: Date; // Changed to match server naming
 }

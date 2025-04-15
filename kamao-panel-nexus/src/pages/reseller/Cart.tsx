@@ -44,13 +44,13 @@ const ResellerCart = () => {
     address: "",
     city: "",
     state: "",
-    zipCode: "",
+    zip_code: "",
     phone: "",
     carrier: "standard"
   });
   
   const handleQuantityChange = (productId: string, type: 'increase' | 'decrease') => {
-    const item = cartItems.find(item => item.productId === productId);
+    const item = cartItems.find(item => item.product_id === productId);
     if (!item) return;
     
     const newQuantity = type === 'increase' ? item.quantity + 1 : item.quantity - 1;
@@ -84,7 +84,7 @@ const ResellerCart = () => {
       address: "",
       city: "",
       state: "",
-      zipCode: "",
+      zip_code: "",
       phone: "",
       carrier: "standard"
     });
@@ -97,7 +97,7 @@ const ResellerCart = () => {
       shippingInfo.address.trim() !== "" &&
       shippingInfo.city.trim() !== "" &&
       shippingInfo.state.trim() !== "" &&
-      shippingInfo.zipCode.trim() !== "" &&
+      shippingInfo.zip_code.trim() !== "" &&
       shippingInfo.phone.trim() !== ""
     );
   };
@@ -133,7 +133,7 @@ const ResellerCart = () => {
                     </TableHeader>
                     <TableBody>
                       {cartItems.map((item) => (
-                        <TableRow key={item.productId}>
+                        <TableRow key={item.product_id}>
                           <TableCell>
                             <div className="h-16 w-16 overflow-hidden rounded-md">
                               <img
@@ -151,14 +151,14 @@ const ResellerCart = () => {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>₹{item.product.price.toLocaleString()}</TableCell>
+                          <TableCell>Rs{item.product.price.toLocaleString()}</TableCell>
                           <TableCell>
                             <div className="flex items-center">
                               <Button
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 rounded-r-none"
-                                onClick={() => handleQuantityChange(item.productId, 'decrease')}
+                                onClick={() => handleQuantityChange(item.product_id, 'decrease')}
                                 disabled={item.quantity <= 1}
                               >
                                 <Minus className="h-3 w-3" />
@@ -170,20 +170,20 @@ const ResellerCart = () => {
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 rounded-l-none"
-                                onClick={() => handleQuantityChange(item.productId, 'increase')}
+                                onClick={() => handleQuantityChange(item.product_id, 'increase')}
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
                             </div>
                           </TableCell>
                           <TableCell className="font-medium">
-                            ₹{(item.product.price * item.quantity).toLocaleString()}
+                            Rs{(item.product.price * item.quantity).toLocaleString()}
                           </TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleRemove(item.productId)}
+                              onClick={() => handleRemove(item.product_id)}
                             >
                               <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
@@ -211,16 +211,16 @@ const ResellerCart = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span>₹{cartTotal.toLocaleString()}</span>
+                      <span>Rs{cartTotal.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Shipping Fee</span>
-                      <span>₹0</span>
+                      <span>Rs0</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold">
                       <span>Total</span>
-                      <span>₹{cartTotal.toLocaleString()}</span>
+                      <span>Rs{cartTotal.toLocaleString()}</span>
                     </div>
                     
                     <Button 
@@ -327,12 +327,12 @@ const ResellerCart = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="zipCode">ZIP Code</Label>
+                    <Label htmlFor="zip_code">ZIP Code</Label>
                     <Input
-                      id="zipCode"
-                      name="zipCode"
+                      id="zip_code"
+                      name="zip_code"
                       placeholder="ZIP Code"
-                      value={shippingInfo.zipCode}
+                      value={shippingInfo.zip_code}
                       onChange={handleShippingInfoChange}
                       required
                     />
@@ -366,7 +366,7 @@ const ResellerCart = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="revenue">Expected Revenue (₹)</Label>
+                  <Label htmlFor="revenue">Expected Revenue (Rs)</Label>
                   <Input
                     id="revenue"
                     type="number"
@@ -395,11 +395,11 @@ const ResellerCart = () => {
                   </TableHeader>
                   <TableBody>
                     {cartItems.map((item) => (
-                      <TableRow key={item.productId}>
+                      <TableRow key={item.product_id}>
                         <TableCell>{item.product.name}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
                         <TableCell className="text-right">
-                          ₹{(item.product.price * item.quantity).toLocaleString()}
+                          Rs{(item.product.price * item.quantity).toLocaleString()}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -408,7 +408,7 @@ const ResellerCart = () => {
                     <TableRow>
                       <TableCell colSpan={2} className="font-medium">Total</TableCell>
                       <TableCell className="font-bold text-right">
-                        ₹{cartTotal.toLocaleString()}
+                        Rs{cartTotal.toLocaleString()}
                       </TableCell>
                     </TableRow>
                   </TableBody>
